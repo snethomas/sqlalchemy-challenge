@@ -73,19 +73,19 @@ def tobs():
     return jsonify(most_active_temp_list)
 
 @app.route("/api/v1.0/<start>")
-def start(start_date):
+def start(start):
     session = Session(engine)
     temp_range=session.query(func.min(measurement.tobs),func.max(measurement.tobs),func.avg(measurement.tobs))\
-    .filter(measurement.date>=start_date).all()
+    .filter(measurement.date>=start).all()
     session.close()
     temp_range_list = [{"TMIN": t[0],"TMAX": t[1],"TAVG": t[2]} for t in temp_range]
     return jsonify(temp_range_list)
 
 @app.route("/api/v1.0/<start>/<end>")
-def start_end(start_date,end_date):
+def start_end(start,end):
     session = Session(engine)
     temp_range=session.query(func.min(measurement.tobs),func.max(measurement.tobs),func.avg(measurement.tobs))\
-    .filter(measurement.date>=start_date,measurement.date<=end_date ).all()
+    .filter(measurement.date>=start,measurement.date<=end ).all()
     session.close()
     temp_range_list = [{"TMIN": t[0],"TMAX": t[1],"TAVG": t[2]} for t in temp_range]
     return jsonify(temp_range_list)
