@@ -50,17 +50,47 @@ def welcome():
     )
     
 @app.route("/api/v1.0/precipitation")
-def names():
-    # Create our session (link) from Python to the DB
+def precipitation():
     session = Session(engine)
-
-    """Return a list of all passenger names"""
-    # Query all passengers
-    results = session.query(Passenger.name).all()
-
+    prcp_yr=session.query(measurement.date,measurement.prcp).filter(measurement.date>='2016-08-23').all()
     session.close()
+    prcp_yr_list = [{"Date": p[0], "Precipitation": p[1]} for p in prcp_yr]
+    return jsonify(prcp_yr_list)
 
-    # Convert list of tuples into normal list
-    all_names = list(np.ravel(results))
+@app.route("/api/v1.0/stations")
+def stations():
+    session = Session(engine)
+    stations=session.query(station).all()
+    session.close()
+    stations_list = [{"station": s[0], "name": s[1],"latitude": s[2], "longitude": s[3], "elevation": s[4]} for s in stations]
+    return jsonify(stations_list)
 
-    return jsonify(all_names)
+@app.route("/api/v1.0/tobs")
+def tobs():
+    session = Session(engine)
+    most_active_temp=session.query(measurement.tobs).filter(measurement.station=='USC00519281')\
+        .filter(measurement.date>='2016-08-18').all()
+    session.close()
+    most_active_temp_list = [{"Temperature": t[0]} for t in most_active_temp]
+    return jsonify(most_active_temp_list)
+
+@app.route("/api/v1.0/<start>")
+def start(start_date):
+    session = Session(engine)
+    temp_range=session.query(func.min(measurement.tobs),func.max(measurement.tobs),func.avg(measurement.tobs))\
+    .filter(measurement.date>=start_date).all()
+    session.close()
+    temp_range_list = [{"TMIN": t[0],"TMAX": t[1],"TAVG": t[2]} for t in temp_range]
+    return jsonify(temp_range_list)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start(start_date,end_date):
+    session = Session(engine)
+    temp_range=session.query(func.min(measurement.tobs),func.max(measurement.tobs),func.avg(measurement.tobs))\
+    .filter(measurement.date>=start_date,measurement.date<=end_date ).all()
+    session.close()
+    temp_range_list = [{"TMIN": t[0],"TMAX": t[1],"TAVG": t[2]} for t in temp_range]
+    return jsonify(temp_range_list)
+
+if __name__ == '__main__':
+    app.run(debug=True)
